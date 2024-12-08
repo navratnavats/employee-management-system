@@ -21,7 +21,5 @@ public class DepartmentDTO {
     @Column(name = "name", unique = true)
     private String name;
 
-    @Column(name = "head_of_department")
-    private Integer headOfDepartment;
 
 }
