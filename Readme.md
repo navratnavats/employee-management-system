@@ -1,7 +1,3 @@
-Here’s a detailed `README.md` file for your **Employee Management System** project:
-
----
-
 # Employee Management System
 
 ## Overview
@@ -180,5 +176,3 @@ mvn spring-boot:run
 This project is licensed under the MIT License.
 
 ---
-
-Feel free to ask for more customizations if needed! 😊
