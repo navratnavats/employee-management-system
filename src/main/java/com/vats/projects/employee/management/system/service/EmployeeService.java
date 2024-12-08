@@ -1,6 +1,10 @@
 package com.vats.projects.employee.management.system.service;
 
+import com.vats.projects.employee.management.system.dto.AddressDTO;
+import com.vats.projects.employee.management.system.dto.DepartmentDTO;
 import com.vats.projects.employee.management.system.dto.EmployeeDTO;
+import com.vats.projects.employee.management.system.repository.AddressRepository;
+import com.vats.projects.employee.management.system.repository.DepartmentRepository;
 import com.vats.projects.employee.management.system.repository.EmployeeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,12 @@ public class EmployeeService {
 
     @Autowired
     EmployeeRepository employeeRepository;
+
+    @Autowired
+    AddressRepository addressRepository;
+
+    @Autowired
+    DepartmentRepository departmentRepository;
 
     public EmployeeDTO createEmployee(EmployeeDTO employee) {
         employeeRepository.save(employee);
@@ -44,7 +54,23 @@ public class EmployeeService {
         return employeeRepository.findAll();
     }
     public List<EmployeeDTO> addEmployeesInBulk(List<EmployeeDTO> employees) {
-        return employeeRepository.saveAll(employees);
+        for (EmployeeDTO employee : employees) {
+            System.out.println(employee.getAddress().getId());
+            AddressDTO address = addressRepository.findById(employee.getAddress().getId())
+                    .orElseThrow(() -> new RuntimeException("Address not found with id: " + employee.getAddress().getId()));
+            DepartmentDTO department = departmentRepository.findById(employee.getDepartment().getId())
+                    .orElseThrow(() -> new RuntimeException("Department not found with id: " + employee.getDepartment().getId()));
+
+            // Set the address and department
+            employee.setAddress(address);
+            employee.setDepartment(department);
+
+            // Save employee
+            employeeRepository.save(employee);
+        }
+//        employeeRepository.saveAll(employees);
+
+        return employees;
     }
 
 }

@@ -2,6 +2,7 @@ package com.vats.projects.employee.management.system.service;
 
 import com.vats.projects.employee.management.system.dto.AddressDTO;
 import com.vats.projects.employee.management.system.repository.AddressRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,8 +41,13 @@ public class AddressService {
     public List<AddressDTO> getAllAddresses() {
         return addressRepository.findAll();
     }
+
     public List<AddressDTO> addAddressesInBulk(List<AddressDTO> addresses) {
-        return addressRepository.saveAll(addresses);
+
+        addresses.forEach(addressDTO -> {
+            addressRepository.save(addressDTO);
+        });
+        return addresses;
     }
 
 }
