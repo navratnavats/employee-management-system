@@ -28,7 +28,6 @@ public class FileController {
 
     @PostMapping("/upload")
     public ResponseEntity<List<FileDTO>> uploadFile(@RequestParam("file") MultipartFile[] file, @RequestParam("employeeId") Integer employeeId) {
-        // Simulate saving the file to storage and create metadata
         List<FileDTO> fileDTO = fileService.uploadFile(file, employeeId);
         return new ResponseEntity<>(fileDTO, HttpStatus.OK);
     }

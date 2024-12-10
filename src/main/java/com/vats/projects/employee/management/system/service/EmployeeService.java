@@ -61,14 +61,11 @@ public class EmployeeService {
             DepartmentDTO department = departmentRepository.findById(employee.getDepartment().getId())
                     .orElseThrow(() -> new RuntimeException("Department not found with id: " + employee.getDepartment().getId()));
 
-            // Set the address and department
             employee.setAddress(address);
             employee.setDepartment(department);
 
-            // Save employee
             employeeRepository.save(employee);
         }
-//        employeeRepository.saveAll(employees);
 
         return employees;
     }
