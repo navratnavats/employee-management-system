@@ -8,8 +8,6 @@ DROP TABLE IF EXISTS department;
 DROP TABLE IF EXISTS addresses;
 
 
-
-
 -- Create Address Table
 CREATE TABLE addresses (
     id INT PRIMARY KEY auto_increment,
