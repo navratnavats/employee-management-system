@@ -21,7 +21,6 @@ public class DepartmentService {
         DepartmentDTO existing = departmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
         existing.setName(department.getName());
-        existing.setHeadOfDepartment(department.getHeadOfDepartment());
         return departmentRepository.save(existing);
     }
 
@@ -38,7 +37,11 @@ public class DepartmentService {
         return departmentRepository.findAll();
     }
     public List<DepartmentDTO> addDepartmentsInBulk(List<DepartmentDTO> departments) {
-        return departmentRepository.saveAll(departments);
+        departments.forEach(department ->{
+            departmentRepository.save(department);
+        });
+
+        return departments;
     }
 
 }

@@ -55,7 +55,7 @@ public class FileService {
 
     private List<FileDTO> mutipleFileUpload(MultipartFile[] files, Integer employeeId) {
         List<FileDTO> fileDTOList = new ArrayList<>();
-        EmployeeDTO employee = employeeService.getEmployeeById(employeeId); // Add this method in EmployeeService
+        EmployeeDTO employee = employeeService.getEmployeeById(employeeId);
         Arrays.stream(files).forEach(file ->{
             String originalFileName = file.getOriginalFilename().trim();
             String fileName = getFileName(employeeId, originalFileName);
@@ -63,7 +63,6 @@ public class FileService {
 
             String fileUrl = s3BucketService.uploadSingleFile(fileName, file);
 
-            // Create FileDTO object
             FileDTO fileDTO = setFileDTO(fileName, fileType, fileUrl, employee);
 
             fileDTOList.add(fileDTO);
@@ -78,10 +77,9 @@ public class FileService {
         String originalFileName = file.getOriginalFilename().trim();
         String fileName = getFileName(employeeId, originalFileName);
         String fileType = file.getContentType();
-        String fileUrl = s3BucketService.uploadSingleFile(fileName, file); // Assume file is stored locally in /uploads
+        String fileUrl = s3BucketService.uploadSingleFile(fileName, file);
 
-        // Fetch the employee from the database
-        EmployeeDTO employee = employeeService.getEmployeeById(employeeId); // Add this method in EmployeeService
+        EmployeeDTO employee = employeeService.getEmployeeById(employeeId);
 
         // Create FileDTO object
         FileDTO fileDTO = setFileDTO(fileName, fileType, fileUrl, employee);
