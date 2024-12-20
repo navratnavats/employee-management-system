@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class AuditLogDTO {
-    private Long id;
+    private Integer id;
     private String entityName;
     private Integer entityId;
     private String action;

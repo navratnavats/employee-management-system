@@ -2,14 +2,20 @@ package com.vats.projects.employee.management.system.service;
 
 import com.vats.projects.employee.management.system.dto.EmployeeDTO;
 import com.vats.projects.employee.management.system.dto.FileDTO;
+import com.vats.projects.employee.management.system.entity.*;
+import com.vats.projects.employee.management.system.repository.AddressRepository;
+import com.vats.projects.employee.management.system.repository.DepartmentRepository;
 import com.vats.projects.employee.management.system.repository.FileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FileService {
@@ -18,57 +24,97 @@ public class FileService {
     private FileRepository fileRepository;
 
     @Autowired
-    S3BucketService s3BucketService;
+    private S3BucketService s3BucketService;
 
     @Autowired
-    EmployeeService employeeService;
+    private EmployeeService employeeService;
 
-    public FileDTO uploadFile(FileDTO file) {
-        return fileRepository.save(file);
-    }
+    @Autowired
+    AuditLogService auditLogService;
 
-    public List<FileDTO> getFilesByEmployeeId(Integer employeeId) {
-        return fileRepository.findByEmployeeId(employeeId);
-    }
+    @Autowired
+    AddressRepository addressRepository;
+
+    @Autowired
+    DepartmentRepository departmentRepository;
 
     public void deleteFile(Integer id) {
         fileRepository.deleteById(id);
     }
 
-    public void deleteMultipleFiles(Integer employeeId){
-        List<FileDTO> fileDetailsListForEmployee = fileRepository.findByEmployeeId(employeeId);
-        s3BucketService.deleteMultipleFiles(fileDetailsListForEmployee, employeeId);
-        fileRepository.deleteAllByEmployeeId(employeeId);
+
+    public void deleteFile(Integer employeeId, List<String> fileName) {
+        if(fileName.size()==1){
+            deleteSingleFile(employeeId, fileName.get(0));
+        }
+        else{
+            deleteMultipleFiles(employeeId, fileName);
+        }
     }
 
-    public void deleteSingleFileForParticularEmployee(Integer employeeId, String fileName) {
+    private void deleteMultipleFiles(Integer employeeID, List<String> fileNames){
+        s3BucketService.deleteMultipleFiles(fileNames, employeeID);
+        fileNames.stream().forEach(file -> {
+            fileRepository.deleteSingleFileByEmployeeIdAndFileName(employeeID, file);
+        });
+    }
+
+    private void deleteSingleFile(Integer employeeId, String fileName){
         s3BucketService.deleteSingleFile(fileName, employeeId);
-        fileRepository.deleteSingleFileForParticularEmployee(employeeId, fileName);
+        fileRepository.deleteSingleFileByEmployeeIdAndFileName(employeeId, fileName);
     }
 
-    public List<FileDTO> uploadFile(MultipartFile[] file, Integer employeeId) {
-        if (file.length == 1)
-            return singleFileUpload(file[0], employeeId);
-        else
-            return mutipleFileUpload(file, employeeId);
+    public void deleteAllFiles(Integer employeeID){
+        List<File> file = fileRepository.findByEmployeeId(employeeID);
+        List<String> fileNames = file.stream().map(File::getFileName).toList();
+        deleteMultipleFiles(employeeID, fileNames);
     }
 
-    private List<FileDTO> mutipleFileUpload(MultipartFile[] files, Integer employeeId) {
+    public List<FileDTO> uploadFiles(MultipartFile[] files, Integer employeeId) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setEntityName("File");
+        auditLog.setEntityId(employeeId);
+        auditLog.setAction("INSERT");
+        auditLog.setChangedBy("API_CALL"); // Pass the user performing the action
+        auditLog.setTimestamp(new Timestamp(System.currentTimeMillis()));
+        auditLogService.saveAuditLog(auditLog);
+        if (files.length == 1) {
+            return singleFileUpload(files[0], employeeId);
+        } else {
+            return multipleFileUpload(files, employeeId);
+        }
+    }
+
+    public List<FileDTO> getFilesByEmployeeId(Integer employeeId) {
         List<FileDTO> fileDTOList = new ArrayList<>();
-        EmployeeDTO employee = employeeService.getEmployeeById(employeeId);
-        Arrays.stream(files).forEach(file ->{
+            fileRepository.findByEmployeeId(employeeId).stream().forEach(file -> {
+                fileDTOList.add(mapToDTO(file));
+            });
+            return fileDTOList;
+        }
+
+    private List<FileDTO> multipleFileUpload(MultipartFile[] files, Integer employeeId) {
+        List<FileDTO> fileDTOList = new ArrayList<>();
+        EmployeeDTO employeeDTO = employeeService.getEmployeeById(employeeId);
+
+        files = Arrays.stream(files).toArray(MultipartFile[]::new);
+
+        Arrays.stream(files).forEach(file -> {
             String originalFileName = file.getOriginalFilename().trim();
             String fileName = getFileName(employeeId, originalFileName);
             String fileType = file.getContentType();
-
             String fileUrl = s3BucketService.uploadSingleFile(fileName, file);
 
-            FileDTO fileDTO = setFileDTO(fileName, fileType, fileUrl, employee);
+            File fileEntity = new File();
+            fileEntity.setFileName(fileName);
+            fileEntity.setFileType(fileType);
+            fileEntity.setFileUrl(fileUrl);
+            fileEntity.setEmployee(mapToEmployeeEntity(employeeDTO));
 
-            fileDTOList.add(fileDTO);
-
-            fileRepository.save(fileDTO);
+            File savedFile = fileRepository.save(fileEntity);
+            fileDTOList.add(mapToDTO(savedFile));
         });
+
         return fileDTOList;
     }
 
@@ -79,28 +125,49 @@ public class FileService {
         String fileType = file.getContentType();
         String fileUrl = s3BucketService.uploadSingleFile(fileName, file);
 
-        EmployeeDTO employee = employeeService.getEmployeeById(employeeId);
+        EmployeeDTO employeeDTO = employeeService.getEmployeeById(employeeId);
 
-        // Create FileDTO object
-        FileDTO fileDTO = setFileDTO(fileName, fileType, fileUrl, employee);
+        File fileEntity = new File();
+        fileEntity.setFileName(fileName);
+        fileEntity.setFileType(fileType);
+        fileEntity.setFileUrl(fileUrl);
+        fileEntity.setEmployee(mapToEmployeeEntity(employeeDTO));
 
-        fileRepository.save(fileDTO);
+        File savedFile = fileRepository.save(fileEntity);
 
-        return (List<FileDTO>) fileDTO;
+        return List.of(mapToDTO(savedFile));
     }
 
     private static String getFileName(Integer employeeId, String originalFileName) {
-        String fileName = "EmpID_"+ employeeId +"_"+ originalFileName.replaceAll(" ", "_");
-        return fileName;
+        return "EmpID_" + employeeId + "_" + originalFileName.replaceAll(" ", "_");
     }
 
-
-    private static FileDTO setFileDTO(String fileName, String fileType, String fileUrl, EmployeeDTO employee) {
+    private FileDTO mapToDTO(File file) {
         FileDTO fileDTO = new FileDTO();
-        fileDTO.setFileName(fileName);
-        fileDTO.setFileType(fileType);
-        fileDTO.setFileUrl(fileUrl);
-        fileDTO.setEmployee(employee);
+        fileDTO.setId(file.getId());
+        fileDTO.setFileName(file.getFileName());
+        fileDTO.setFileType(file.getFileType());
+        fileDTO.setFileUrl(file.getFileUrl());
         return fileDTO;
     }
+
+
+    private Employee mapToEmployeeEntity(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        employee.setId(employeeDTO.getId());
+        employee.setFirstName(employeeDTO.getFirstName());
+        employee.setLastName(employeeDTO.getLastName());
+        employee.setSalary(employeeDTO.getSalary());
+        employee.setDesignation(employeeDTO.getDesignation());
+        employee.setBloodGroup(employeeDTO.getBloodGroup());
+        employee.setDateOfBirth(employeeDTO.getDateOfBirth());
+        Address address = addressRepository.findById(employeeDTO.getAddressId()).get();
+        employee.setAddress(address);
+        Department department = departmentRepository.findById(employeeDTO.getDeptId()).get();
+        employee.setDepartment(department);
+        return employee;
+
+    }
 }
+
+

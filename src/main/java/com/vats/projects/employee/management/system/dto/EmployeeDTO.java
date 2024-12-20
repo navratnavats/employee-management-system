@@ -2,6 +2,8 @@ package com.vats.projects.employee.management.system.dto;
 
 import lombok.Data;
 
+import java.sql.Date;
+
 @Data
 public class EmployeeDTO {
     private Integer id;
@@ -12,4 +14,5 @@ public class EmployeeDTO {
     private Integer salary;
     private Integer deptId;
     private Integer addressId;
+    private Date dateOfBirth;
 }

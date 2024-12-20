@@ -1,12 +1,13 @@
 package com.vats.projects.employee.management.system.service;
 
+import com.vats.projects.employee.management.system.entity.Address;
 import com.vats.projects.employee.management.system.dto.AddressDTO;
 import com.vats.projects.employee.management.system.repository.AddressRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AddressService {
@@ -14,40 +15,46 @@ public class AddressService {
     @Autowired
     private AddressRepository addressRepository;
 
-    public AddressDTO createAddress(AddressDTO address) {
-        return addressRepository.save(address);
+    public AddressDTO saveAddress(AddressDTO addressDTO) {
+        Address address = mapToEntity(addressDTO);
+        Address savedAddress = addressRepository.save(address);
+        return mapToDTO(savedAddress);
     }
 
-    public AddressDTO updateAddress(Integer id, AddressDTO address) {
-        AddressDTO existing = addressRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Address not found"));
-        existing.setStreet(address.getStreet());
-        existing.setCity(address.getCity());
-        existing.setState(address.getState());
-        existing.setCountry(address.getCountry());
-        existing.setPincode(address.getPincode());
-        return addressRepository.save(existing);
+    public AddressDTO getAddressById(Integer id) {
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Address not found with ID: " + id));
+        return mapToDTO(address);
+    }
+
+    public List<AddressDTO> getAllAddresses() {
+        List<Address> addresses = addressRepository.findAll();
+        return addresses.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     public void deleteAddress(Integer id) {
         addressRepository.deleteById(id);
     }
 
-    public AddressDTO getAddressById(Integer id) {
-        return addressRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Address not found"));
+    private Address mapToEntity(AddressDTO addressDTO) {
+        Address address = new Address();
+        address.setId(addressDTO.getId());
+        address.setStreet(addressDTO.getStreet());
+        address.setCity(addressDTO.getCity());
+        address.setState(addressDTO.getState());
+        address.setCountry(addressDTO.getCountry());
+        address.setPincode(addressDTO.getPincode());
+        return address;
     }
 
-    public List<AddressDTO> getAllAddresses() {
-        return addressRepository.findAll();
+    private AddressDTO mapToDTO(Address address) {
+        AddressDTO addressDTO = new AddressDTO();
+        addressDTO.setId(address.getId());
+        addressDTO.setStreet(address.getStreet());
+        addressDTO.setCity(address.getCity());
+        addressDTO.setState(address.getState());
+        addressDTO.setCountry(address.getCountry());
+        addressDTO.setPincode(address.getPincode());
+        return addressDTO;
     }
-
-    public List<AddressDTO> addAddressesInBulk(List<AddressDTO> addresses) {
-
-        addresses.forEach(addressDTO -> {
-            addressRepository.save(addressDTO);
-        });
-        return addresses;
-    }
-
 }

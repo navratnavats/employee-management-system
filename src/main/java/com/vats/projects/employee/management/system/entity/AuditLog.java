@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "entity_name", nullable = false)
     private String entityName;
