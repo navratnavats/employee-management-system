@@ -1,6 +1,7 @@
 package com.vats.projects.employee.management.system.service;
 
 import com.vats.projects.employee.management.system.dto.FileDTO;
+import com.vats.projects.employee.management.system.entity.File;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,15 +41,15 @@ public class S3BucketService {
     }
 
 
-    public void deleteMultipleFiles(List<FileDTO> fileDetailsListForEmployee, Integer employeeId) {
+    public void deleteMultipleFiles(List<String> fileDetailsListForEmployee, Integer employeeId) {
 
-        List<ObjectIdentifier> objectIdentifiers = fileDetailsListForEmployee
-                .stream().map(key -> ObjectIdentifier.builder().key(key.getFileName()).build())
+        List<ObjectIdentifier> objectIdentifierList = fileDetailsListForEmployee
+                .stream().map(k -> ObjectIdentifier.builder().key(k).build())
                 .collect(Collectors.toList());
 
         DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder()
                 .bucket(bucketName)
-                .delete(Delete.builder().objects(objectIdentifiers).build())
+                .delete(Delete.builder().objects(objectIdentifierList).build())
                 .build();
 
         s3Client.deleteObjects(deleteObjectsRequest);

@@ -16,19 +16,8 @@ public class AddressController {
     private AddressService addressService;
 
     @PostMapping
-    public ResponseEntity<AddressDTO> createAddress(@RequestBody AddressDTO address) {
-        return ResponseEntity.ok(addressService.createAddress(address));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<AddressDTO> updateAddress(@PathVariable Integer id, @RequestBody AddressDTO address) {
-        return ResponseEntity.ok(addressService.updateAddress(id, address));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAddress(@PathVariable Integer id) {
-        addressService.deleteAddress(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<AddressDTO> createOrUpdateAddress(@RequestBody AddressDTO addressDTO) {
+        return ResponseEntity.ok(addressService.saveAddress(addressDTO));
     }
 
     @GetMapping("/{id}")
@@ -40,9 +29,10 @@ public class AddressController {
     public ResponseEntity<List<AddressDTO>> getAllAddresses() {
         return ResponseEntity.ok(addressService.getAllAddresses());
     }
-    @PostMapping("/bulk")
-    public ResponseEntity<List<AddressDTO>> addAddressesInBulk(@RequestBody List<AddressDTO> addresses) {
-        return ResponseEntity.ok(addressService.addAddressesInBulk(addresses));
-    }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAddress(@PathVariable Integer id) {
+        addressService.deleteAddress(id);
+        return ResponseEntity.noContent().build();
+    }
 }

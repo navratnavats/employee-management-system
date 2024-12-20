@@ -1,10 +1,7 @@
 package com.vats.projects.employee.management.system.controller;
 
-import com.vats.projects.employee.management.system.dto.EmployeeDTO;
 import com.vats.projects.employee.management.system.dto.FileDTO;
-import com.vats.projects.employee.management.system.service.EmployeeService;
 import com.vats.projects.employee.management.system.service.FileService;
-import com.vats.projects.employee.management.system.service.S3BucketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,33 +17,59 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-    @Autowired
-    EmployeeService employeeService;
-
-    @Autowired
-    S3BucketService s3BucketService;
-
+    /**
+     * Upload files for an employee.
+     * Handles both single and multiple file uploads.
+     *
+     * @param files      Multipart file array for upload
+     * @param employeeId ID of the employee
+     * @return List of FileDTO representing uploaded files
+     */
     @PostMapping("/upload")
-    public ResponseEntity<List<FileDTO>> uploadFile(@RequestParam("file") MultipartFile[] file, @RequestParam("employeeId") Integer employeeId) {
-        List<FileDTO> fileDTO = fileService.uploadFile(file, employeeId);
-        return new ResponseEntity<>(fileDTO, HttpStatus.OK);
+    public ResponseEntity<List<FileDTO>> uploadFiles(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam("employeeId") Integer employeeId) {
+        List<FileDTO> fileDTOs = fileService.uploadFiles(files, employeeId);
+        return ResponseEntity.ok(fileDTOs);
     }
 
-
+    /**
+     * Get all files associated with a specific employee.
+     *
+     * @param employeeId ID of the employee
+     * @return List of FileDTO representing employee files
+     */
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<List<FileDTO>> getFilesByEmployeeId(@PathVariable Integer employeeId) {
-        return ResponseEntity.ok(fileService.getFilesByEmployeeId(employeeId));
+        List<FileDTO> fileDTOs = fileService.getFilesByEmployeeId(employeeId);
+        return ResponseEntity.ok(fileDTOs);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteSingleFileForParticularEmployee(@PathVariable Integer id, @RequestParam String fileName) {
-        fileService.deleteSingleFileForParticularEmployee(id, fileName);
-        return new ResponseEntity<>(HttpStatus.OK);
+    /**
+     * Delete a specific file for an employee.
+     *
+     * @param employeeId ID of the employee
+     * @param fileName   Name of the file to delete
+     * @return HTTP status indicating the result
+     */
+
+    @DeleteMapping("/employee/{employeeId}/file")
+    public ResponseEntity<Void> deleteFilesForEmployee(
+            @PathVariable Integer employeeId,
+            @RequestParam("fileName") List<String> fileName) {
+        fileService.deleteFile(employeeId, fileName);
+        return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/delete/all/{employeeId}")
-    public ResponseEntity<Void> deleteMultipleFiles(@PathVariable Integer employeeId){
-        fileService.deleteMultipleFiles(employeeId);
-        return new ResponseEntity(HttpStatus.OK);
+    /**
+     * Delete all files associated with an employee.
+     *
+     * @param employeeId ID of the employee
+     * @return HTTP status indicating the result
+     */
+    @DeleteMapping("/employee/{employeeId}/files")
+    public ResponseEntity<Void> deleteAllFilesForEmployee(@PathVariable Integer employeeId) {
+        fileService.deleteAllFiles(employeeId);
+        return ResponseEntity.noContent().build();
     }
 }

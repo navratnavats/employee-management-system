@@ -16,19 +16,8 @@ public class DepartmentController {
     private DepartmentService departmentService;
 
     @PostMapping
-    public ResponseEntity<DepartmentDTO> createDepartment(@RequestBody DepartmentDTO department) {
-        return ResponseEntity.ok(departmentService.createDepartment(department));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<DepartmentDTO> updateDepartment(@PathVariable Integer id, @RequestBody DepartmentDTO department) {
-        return ResponseEntity.ok(departmentService.updateDepartment(id, department));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartment(@PathVariable Integer id) {
-        departmentService.deleteDepartment(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<DepartmentDTO> createOrUpdateDepartment(@RequestBody DepartmentDTO departmentDTO) {
+        return ResponseEntity.ok(departmentService.saveDepartment(departmentDTO));
     }
 
     @GetMapping("/{id}")
@@ -40,9 +29,10 @@ public class DepartmentController {
     public ResponseEntity<List<DepartmentDTO>> getAllDepartments() {
         return ResponseEntity.ok(departmentService.getAllDepartments());
     }
-    @PostMapping("/bulk")
-    public ResponseEntity<List<DepartmentDTO>> addDepartmentsInBulk(@RequestBody List<DepartmentDTO> departments) {
-        return ResponseEntity.ok(departmentService.addDepartmentsInBulk(departments));
-    }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDepartment(@PathVariable Integer id) {
+        departmentService.deleteDepartment(id);
+        return ResponseEntity.noContent().build();
+    }
 }

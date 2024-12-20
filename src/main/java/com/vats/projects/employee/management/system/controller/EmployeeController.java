@@ -1,50 +1,34 @@
 package com.vats.projects.employee.management.system.controller;
 
 import com.vats.projects.employee.management.system.dto.EmployeeDTO;
+import com.vats.projects.employee.management.system.dto.NewUserRequest;
+import com.vats.projects.employee.management.system.dto.RoleDTO;
+import com.vats.projects.employee.management.system.dto.UserDTO;
 import com.vats.projects.employee.management.system.service.EmployeeService;
-import lombok.extern.slf4j.Slf4j;
+import com.vats.projects.employee.management.system.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
-@Slf4j
-@RequestMapping("/employee")
+@RequestMapping("/employees")
 public class EmployeeController {
 
     @Autowired
-    EmployeeService employeeService;
+    private EmployeeService employeeService;
 
-    //create
-    @PostMapping("/create")
-    public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody @Validated EmployeeDTO employee){
-        if(employee != null){
-            EmployeeDTO employeeDTO = employeeService.createEmployee(employee);
-            return new ResponseEntity<>(employeeDTO, HttpStatus.CREATED);
-        }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    @Autowired
+    UserService userService;
 
-    }
-
-    //update
-    @PutMapping("/update")
-    public ResponseEntity<EmployeeDTO> updateEmployee(@RequestBody @Validated EmployeeDTO employee){
-        if(employee != null){
-            EmployeeDTO employeeDTO = employeeService.updateEmployee(employee);
-            return new ResponseEntity<>(employeeDTO, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    }
-
-    //delete
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<EmployeeDTO> deleteEmployeeById(@PathVariable int id){
-        employeeService.deleteEmployeeById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PostMapping
+    public ResponseEntity<EmployeeDTO> createOrUpdateEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        return ResponseEntity.ok(employeeService.saveEmployee(employeeDTO));
     }
 
     @GetMapping("/{id}")
@@ -56,9 +40,21 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
-    @PostMapping("/bulk")
-    public ResponseEntity<List<EmployeeDTO>> addEmployeesInBulk(@RequestBody List<EmployeeDTO> employees) {
-        return ResponseEntity.ok(employeeService.addEmployeesInBulk(employees));
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable Integer id) {
+        employeeService.deleteEmployee(id);
+        return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<EmployeeDTO>> searchEmployees(
+            @RequestParam(required = false) Integer departmentId,
+            @RequestParam(required = false) Integer minSalary,
+            @RequestParam(required = false) Integer maxSalary,
+            Pageable pageable) {
+        return ResponseEntity.ok(employeeService.searchEmployees(departmentId, minSalary, maxSalary, pageable));
+    }
+
 
 }
